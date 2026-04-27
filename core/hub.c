@@ -1,6 +1,6 @@
 /**
  * @file hub.c
- * @brief Hub state machine, menu rendering, and frame overlay.
+ * @brief Hub state machine, menu rendering, and frame overlay. (Deploy v1.1)
  *
  * The hub manages two states:
  *   STATE_MENU — interactive game selection menu
