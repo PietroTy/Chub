@@ -1,0 +1,13 @@
+# Build artifacts
+build/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Emscripten cache
+.emscripten_cache/

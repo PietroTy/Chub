@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+
+    <title>CHUB - Game Hub</title>
+
+    <meta name="title" content="CHUB - Game Hub">
+    <meta name="description" content="Hub modular de jogos feito com Raylib e WebAssembly">
+    <meta name="keywords" content="chub, game hub, raylib, webassembly, wasm, jogos, games">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="CHUB - Game Hub">
+    <meta property="og:description" content="Hub modular de jogos feito com Raylib e WebAssembly">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="CHUB - Game Hub">
+    <meta name="twitter:description" content="Hub modular de jogos feito com Raylib e WebAssembly">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            overflow: hidden;
+            background-color: #0a0a14;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: 'Segoe UI', -apple-system, sans-serif;
+        }
+
+        /* Loading overlay */
+        #loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #0a0a14;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            transition: opacity 0.5s ease;
+        }
+
+        #loading.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #loading h1 {
+            color: #64b4ff;
+            font-size: 48px;
+            letter-spacing: 12px;
+            margin-bottom: 30px;
+            text-shadow: 0 0 20px rgba(100, 180, 255, 0.4);
+        }
+
+        .loader {
+            width: 50px;
+            height: 50px;
+            border: 3px solid #1c1e2d;
+            border-top-color: #64b4ff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        #loading p {
+            color: #505a6e;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+
+        /* Canvas */
+        canvas.emscripten {
+            border: 2px solid #2a2e45;
+            border-radius: 6px;
+            box-shadow:
+                0 0 30px rgba(100, 180, 255, 0.08),
+                0 4px 20px rgba(0, 0, 0, 0.5);
+            outline: none;
+        }
+
+        canvas.emscripten:focus {
+            border-color: #64b4ff;
+            box-shadow:
+                0 0 30px rgba(100, 180, 255, 0.15),
+                0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Hide Emscripten output */
+        #output {
+            display: none;
+        }
+    </style>
+  </head>
+  <body>
+    <!-- Loading screen -->
+    <div id="loading">
+        <h1>C H U B</h1>
+        <div class="loader"></div>
+        <p>Carregando...</p>
+    </div>
+
+    <!-- Game canvas -->
+    <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()" tabindex="-1"></canvas>
+    <p id="output"></p>
+
+    <script>
+        var Module = {
+            print: (function() {
+                var element = document.getElementById('output');
+                if (element) element.value = '';
+                return function(text) {
+                    if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
+                    console.log(text);
+                };
+            })(),
+            canvas: (function() {
+                var canvas = document.getElementById('canvas');
+                return canvas;
+            })(),
+            onRuntimeInitialized: function() {
+                // Hide loading screen when WASM is ready
+                var loading = document.getElementById('loading');
+                if (loading) {
+                    loading.classList.add('hidden');
+                    setTimeout(function() {
+                        loading.style.display = 'none';
+                    }, 500);
+                }
+
+                // Focus canvas for keyboard input
+                var canvas = document.getElementById('canvas');
+                if (canvas) canvas.focus();
+
+                // Browser audio policy: Resume audio context on first user interaction
+                const resumeAudio = () => {
+                    // General Web Audio resume
+                    if (window.AudioContext || window.webkitAudioContext) {
+                        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                        if (ctx.state === 'suspended') ctx.resume();
+                    }
+                    document.removeEventListener('click', resumeAudio);
+                    document.removeEventListener('keydown', resumeAudio);
+                };
+                document.addEventListener('click', resumeAudio);
+                document.addEventListener('keydown', resumeAudio);
+            }
+        };
+    </script>
+    {{{ SCRIPT }}}
+  </body>
+</html>
