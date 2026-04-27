@@ -289,8 +289,7 @@ void candycrush_draw(void){
     for(int r=0;r<=GRID_H;r++)DrawLine(0,oy+r*CELL_SZ,BW,oy+r*CELL_SZ,(Color){255,255,255,20});
     for(int c=0;c<=GRID_W;c++)DrawLine(c*CELL_SZ,oy,c*CELL_SZ,oy+GRID_H*CELL_SZ,(Color){255,255,255,20});
 
-    const char *ctrl = L("Clique e arraste para trocar", "Click and drag to swap");
-    DrawText(ctrl, BW - MeasureText(ctrl, 15) - 10, BH - 20, 15, (Color){200, 200, 200, 80});
+
 }
 
 void candycrush_unload(void){if(sound_loaded){UnloadSound(pop_sound);UnloadSound(pop_special_sound);sound_loaded=false;}printf("[CANDYCRUSH] Game unloaded\n");}

@@ -351,7 +351,10 @@ void tectris_draw(void) {
     ClearBackground(BLACK);
 
     // Background stripes (playfield only)
-    for (int i = 0; i <= TC_HEIGHT; i += TC_BLOCK * 2) DrawRectangle(0, i, TC_PLAYFIELD_W, TC_BLOCK, (Color){20, 20, 20, 255});
+    for (int i = 0; i < TC_GRID_H; i++) {
+        Color stripeCol = (i % 2 == 0) ? (Color){20, 20, 22, 255} : (Color){30, 30, 32, 255};
+        DrawRectangle(0, i * TC_BLOCK, TC_PLAYFIELD_W, TC_BLOCK, stripeCol);
+    }
     DrawLine(TC_PLAYFIELD_W, 0, TC_PLAYFIELD_W, TC_HEIGHT, GRAY);
 
     // ── Sidebar (Right Panel) ──
@@ -377,8 +380,7 @@ void tectris_draw(void) {
     DrawText(TextFormat("%d", tc_highscore), sb_x + 5, 460, 25, WHITE);
 
     // Localized controls hint
-    DrawText(L("Setas/WASD: Mover", "Arrows/WASD: Move"), sb_x + 5, 520, 12, (Color){150, 150, 150, 120});
-    DrawText(L("C/SHIFT: Banco", "C/SHIFT: Hold"), sb_x + 5, 540, 12, (Color){150, 150, 150, 120});
+
 
     // ── Playfield Content ──
     for (int i = 0; i < TC_GRID_H; i++) {

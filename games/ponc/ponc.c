@@ -415,17 +415,7 @@ void ponc_draw(void) {
     }
     DrawRectangle((int)cpu.x, (int)cpu.y, (int)cpu.w, (int)cpu.h, PONC_PADDLE_CPU);
 
-    if (ponc_state == PONC_STATE_PLAYING || ponc_state == PONC_STATE_COUNTDOWN) {
-        const char *c1 = L("P1: W/S", "P1: W/S");
-        DrawText(c1, 20, PONC_HEIGHT - 30, 15, (Color){200, 200, 200, 80});
-        if (game_mode == 1) {
-            const char *c2 = L("P2: Setas", "P2: Arrows");
-            DrawText(c2, PONC_WIDTH - MeasureText(c2, 15) - 20, PONC_HEIGHT - 30, 15, (Color){200, 200, 200, 80});
-        } else {
-            const char *c2 = L("Tambem use Setas", "Also use Arrows");
-            DrawText(c2, PONC_WIDTH - MeasureText(c2, 15) - 20, PONC_HEIGHT - 30, 15, (Color){200, 200, 200, 80});
-        }
-    }
+
 
     // ── Ball ──
     if (ponc_state == PONC_STATE_PLAYING || ponc_state == PONC_STATE_COUNTDOWN) {

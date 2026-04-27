@@ -545,8 +545,7 @@ void spaceinvaders_draw(void) {
     const char* lvl_text = TextFormat("%d-%d", world, stage);
     DrawText(lvl_text, (IW - MeasureText(lvl_text, 20)) / 2, 35, 20, YELLOW);
 
-    const char *ctrl = L("Setas/AD para mover | ESPACO para atirar", "Arrows/AD to move | SPACE to fire");
-    DrawText(ctrl, (IW - MeasureText(ctrl, 15))/2, IH - 20, 15, (Color){255, 255, 255, 100});
+
 
     if (game_over || game_won) {
         DrawRectangle(0, 0, IW, IH, BLACK);

@@ -220,17 +220,7 @@ void ctron_draw(void) {
     const char *p2_label = (game_mode == 1) ? L("P2", "P2") : L("CPU", "CPU");
     DrawText(TextFormat(L("%s: %d", "%s: %d"), p2_label, p2_score), 3*TW/4-100, 10, 40, COL_P2);
 
-    if (!in_menu) {
-        const char *c1 = L("P1: WASD", "P1: WASD");
-        DrawText(c1, 20, TH - 30, 15, (Color){200, 200, 200, 80});
-        if (game_mode == 1) {
-            const char *c2 = L("P2: Setas", "P2: Arrows");
-            DrawText(c2, TW - MeasureText(c2, 15) - 20, TH - 30, 15, (Color){200, 200, 200, 80});
-        } else {
-            const char *c2 = L("Tambem use Setas", "Also use Arrows");
-            DrawText(c2, TW - MeasureText(c2, 15) - 20, TH - 30, 15, (Color){200, 200, 200, 80});
-        }
-    }
+
 
     if (tstate == TR_P1_WIN || tstate == TR_P2_WIN || tstate == TR_DRAW) {
         DrawRectangle(0, 0, TW, TH, (Color){0, 0, 0, 200});

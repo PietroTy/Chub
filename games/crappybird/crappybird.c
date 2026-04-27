@@ -201,8 +201,7 @@ void crappybird_init(void) {
     cd_num = 3;
     cd_timer = 0.0f;
     bird.color = 1;
-    highscore = 200;
-    hub_save_score(0, highscore);
+    highscore = hub_load_score(6);
     cb_selection = 0;
     store = false;
     pop_sound = LoadSound("assets/shared/pop.wav");
@@ -253,7 +252,7 @@ void crappybird_update(void) {
                 bird.color = cb_selection + 1;
             }
         } else {
-            if (score > highscore) { highscore = score; hub_save_score(0, highscore); }
+            if (score > highscore) { highscore = score; hub_save_score(6, highscore); }
             if (IsKeyPressed(KEY_ENTER)) {
                 cb_reset_game();
                 cd_num = 3;
@@ -307,7 +306,7 @@ void crappybird_update(void) {
     // Scoring
     for (int i = 0; i < 2; i++) {
         if (pipes[i].isActive && bird.x > pipes[i].x + 50) {
-            score++; if (score > highscore) { highscore = score; hub_save_score(0, highscore); }
+            score++; if (score > highscore) { highscore = score; hub_save_score(6, highscore); }
             if (sound_loaded) { SetSoundPitch(pop_sound, 1.2f); PlaySound(pop_sound); }
             pipes[i].isActive = false;
         }
@@ -430,8 +429,7 @@ void crappybird_draw(void) {
     const char *hs_text = TextFormat(L("Recorde: %d", "Highscore: %d"), highscore);
     DrawText(hs_text, CB_WIDTH - MeasureText(hs_text, 30) - 10, 10, 30, WHITE);
 
-    const char *ctrl = L("ESPACO ou CLIQUE para voar", "SPACE or CLICK to fly");
-    DrawText(ctrl, (CB_WIDTH - MeasureText(ctrl, 15))/2, CB_HEIGHT - 20, 15, (Color){255, 255, 255, 100});
+
 
 
     if (cd_num > 0) {

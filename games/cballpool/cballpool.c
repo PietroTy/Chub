@@ -399,7 +399,7 @@ void cballpool_draw(void) {
         Color c2 = (game_mode == 1) ? PURPLE : WHITE;
         DrawText(L("<- 1 Jogador (Vs CPU)", "<- 1 Player (Vs CPU)"), PW / 2 - 250, 250, 20, c1);
         DrawText(L("2 Jogadores ->", "2 Players ->"), PW / 2 + 50, 250, 20, c2);
-        DrawText(L("Pressione ESQUERDA ou DIREITA para escolher", "Press LEFT or RIGHT to choose"), PW / 2 - MeasureText(L("Pressione ESQUERDA ou DIREITA para escolher", "Press LEFT or RIGHT to choose"), 20) / 2, 400, 20, DARKGRAY);
+        DrawText(L("Pressione ESQUERDA ou DIREITA para escolher", "Press LEFT or RIGHT to choose"), PW / 2 - MeasureText(L("Pressione ESQUERDA ou DIREITA para escolher", "Press LEFT or RIGHT to choose"), 20) / 2, PH - 60, 20, WHITE);
         return;
     }
 
@@ -524,10 +524,7 @@ void cballpool_draw(void) {
     Color t_color = turn == 1 ? (Color){80,200,255,255} : (Color){255,100,130,255};
     DrawText(t_label, (PW-MeasureText(t_label,18))/2, 10, 18, t_color);
     
-    if (cballpool_state == 0) {
-        const char *ctrl = L("Arraste e solte para tacar", "Drag and release to shoot");
-        DrawText(ctrl, (PW - MeasureText(ctrl, 15))/2, PH - 20, 15, (Color){255, 255, 255, 80});
-    }
+
 
     if (cballpool_state == 2) {
         DrawRectangle(0, 0, PW, PH, (Color){0,0,0,200});

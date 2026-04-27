@@ -127,7 +127,6 @@ static void dj_reset(void) {
 void crazyjump_init(void) {
     cd_num = 3;
     cd_timer = 0.0f;
-    hub_save_score(4, 20000); // Force unlock all skins as requested
     dj_highscore = hub_load_score(4);
     dj_reset();
     pop_sound = LoadSound("assets/shared/pop.wav");
@@ -491,8 +490,7 @@ void crazyjump_draw(void) {
     const char *hs_text = TextFormat(L("Recorde: %d", "Highscore: %d"), dj_highscore);
     DrawText(hs_text, DW - MeasureText(hs_text, 20) - 10, 10, 20, WHITE);
 
-    const char *ctrl = L("A/D ou Setas para mover", "A/D or Arrows to move");
-    DrawText(ctrl, (DW - MeasureText(ctrl, 15))/2, DH - 20, 15, (Color){255, 255, 255, 100});
+
 
     if (dj_dead) {
         if (dj_store) {

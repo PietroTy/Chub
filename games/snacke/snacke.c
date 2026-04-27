@@ -516,8 +516,7 @@ void snacke_draw(void) {
     const char *hs_text = TextFormat(L("Recorde: %d", "Highscore: %d"), highscore);
     DrawText(hs_text, SN_WIDTH - MeasureText(hs_text, 30) - 10, 10, 30, WHITE);
 
-    const char *ctrl = L("WASD ou Setas para mover", "WASD or Arrows to move");
-    DrawText(ctrl, (SN_WIDTH - MeasureText(ctrl, 15))/2, SN_HEIGHT - 20, 15, (Color){255, 255, 255, 80});
+
 
 
     if (cd_num > 0) {

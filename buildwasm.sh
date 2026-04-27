@@ -113,13 +113,13 @@ fi
 
 # ── Run ──
 if [ "$RUN" = true ]; then
-    HTML_FILE="$BUILD_DIR/$PROJECT_NAME.html"
+    HTML_FILE="$BUILD_DIR/index.html"
     if [ ! -f "$HTML_FILE" ]; then
         echo "❌ $HTML_FILE not found! Compile first."
         exit 1
     fi
 
-    echo "🌐 Starting local server on http://localhost:$SERVER_PORT/$PROJECT_NAME.html"
+    echo "🌐 Starting local server on http://localhost:$SERVER_PORT/index.html"
     echo "   Press Ctrl+C to stop"
     
     cd "$BUILD_DIR" || exit

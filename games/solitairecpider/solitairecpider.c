@@ -423,8 +423,7 @@ void solitairecpider_draw(void) {
         }
     }
 
-    const char *ctrl = L("Clique e arraste para mover as cartas", "Click and drag to move cards");
-    DrawText(ctrl, (SW - MeasureText(ctrl, 15))/2, SH - 20, 15, (Color){255, 255, 255, 100});
+
 
     /* Win screen */
     if (sol_won) {

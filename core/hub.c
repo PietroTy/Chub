@@ -197,7 +197,7 @@ static void update_game(void);
 #include <emscripten.h>
 #endif
 
-#define MAX_SCORES 10
+#define MAX_SCORES 32
 static int highscores[MAX_SCORES];
 
 void hub_load_all_scores(void) {
@@ -225,7 +225,7 @@ void hub_save_all_scores(void) {
 int hub_load_score(int game_id) {
 #ifdef PLATFORM_WEB
     return EM_ASM_INT({
-        var val = window.localStorage.getItem('chub_score_' + $0);
+        var val = window.localStorage.getItem('chub_v3_score_' + $0);
         return val ? parseInt(val) : 0;
     }, game_id);
 #else
@@ -237,7 +237,7 @@ int hub_load_score(int game_id) {
 void hub_save_score(int game_id, int score) {
 #ifdef PLATFORM_WEB
     EM_ASM({
-        window.localStorage.setItem('chub_score_' + $0, $1);
+        window.localStorage.setItem('chub_v3_score_' + $0, $1);
     }, game_id, score);
 #else
     if (game_id < 0 || game_id >= MAX_SCORES) return;
@@ -637,52 +637,53 @@ static void draw_game_frame(void) {
         const char *ctrl4 = "";
         
         if (strcmp(current_game->name, "ponC") == 0) { 
-            ctrl1 = "W/S ou Setas"; 
-            ctrl2 = "(P1 e P2)";
+            ctrl1 = L("W/S ou Setas", "W/S or Arrows"); 
+            ctrl2 = L("(P1 e P2)", "(P1 and P2)");
         }
         else if (strcmp(current_game->name, "Crappy bird") == 0) { 
-            ctrl1 = "Espaco: pular"; 
-            ctrl2 = "S: Loja";
+            ctrl1 = L("Espaço: Pular", "Space: Jump"); 
+            ctrl2 = L("S: Loja", "S: Shop");
         }
         else if (strcmp(current_game->name, "snaCke") == 0) { 
-            ctrl1 = "Setas ou WASD"; 
-            ctrl2 = "p/ mover"; 
+            ctrl1 = L("Setas / WASD", "Arrows / WASD"); 
+            ctrl2 = L("Para mover", "To move"); 
         }
         else if (strcmp(current_game->name, "teCtris") == 0) { 
-            ctrl1 = "Setas: move"; 
-            ctrl2 = "Cima: gira"; 
-            ctrl3 = "Espaco: Drop"; 
+            ctrl1 = L("Setas / WASD", "Arrows / WASD"); 
+            ctrl2 = L("Espaço: Drop", "Space: Drop"); 
+            ctrl3 = L("C / Shift: Banco", "C / Shift: Hold"); 
+            ctrl4 = L("Cima: Gira", "Up: Rotate"); 
         }
         else if (strcmp(current_game->name, "mortal Combat") == 0) { 
-            ctrl1 = "P1: WASD+UIOP"; 
-            ctrl2 = "P2: Setas+Num"; 
-            ctrl3 = "P/Vs CPU usa";
-            ctrl4 = "ambos p/ P1";
+            ctrl1 = L("P1: WASD+UIOP", "P1: WASD+UIOP"); 
+            ctrl2 = L("P2: Setas+Num", "P2: Arrows+Num"); 
+            ctrl3 = L("H/J: Golpes", "H/J: Attacks");
+            ctrl4 = L("K/L: Hadouken", "K/L: Hadouken");
         }
         else if (strcmp(current_game->name, "Ctron") == 0) { 
-            ctrl1 = "P1: WASD"; 
-            ctrl2 = "P2: Setas"; 
+            ctrl1 = L("P1: WASD", "P1: WASD"); 
+            ctrl2 = L("P2: Setas", "P2: Arrows"); 
         }
         else if (strcmp(current_game->name, "spaCe invaders") == 0) { 
-            ctrl1 = "AD / Setas"; 
-            ctrl2 = "Espaco: tiro"; 
+            ctrl1 = L("AD / Setas", "AD / Arrows"); 
+            ctrl2 = L("Espaço: Atirar", "Space: Fire"); 
         }
         else if (strcmp(current_game->name, "Crazy jump") == 0) { 
-            ctrl1 = "AD ou Setas"; 
+            ctrl1 = L("AD ou Setas", "AD or Arrows"); 
+            ctrl2 = L("S: Loja", "S: Shop");
         }
         else if (strcmp(current_game->name, "C ball pool") == 0) {
-            ctrl1 = "Mouse: arrasta";
-            ctrl2 = "e solta taco";
+            ctrl1 = L("Mouse: Mira", "Mouse: Aim");
+            ctrl2 = L("Arrasta e solta", "Drag and release");
         }
         else if (strcmp(current_game->name, "Candy Crush") == 0) {
-            ctrl1 = "Mouse: clique";
-            ctrl2 = "p/ trocar";
+            ctrl1 = L("Mouse: Clique", "Mouse: Click");
+            ctrl2 = L("Para trocar", "To swap");
         }
         else if (strcmp(current_game->name, "solitaire Cpider") == 0) {
-            ctrl1 = L("Mouse: arrasta", "Mouse: drag");
+            ctrl1 = L("Mouse: Arrasta", "Mouse: Drag");
             ctrl2 = L("R: Reiniciar", "R: Restart");
-            ctrl3 = L("DblClick: envia", "DblClick: send");
-            ctrl4 = L("para a base", "to foundation");
+            ctrl3 = L("DblClick: Base", "DblClick: Found.");
         }
 
         if (ctrl1[0]) DrawText(ctrl1, text_x, text_y + 45, 20, COL_TEXT_MUTED);
