@@ -274,6 +274,7 @@ void solitairecpider_update(void){
             if(CheckCollisionPointRec(mp,fr)){
                 dragging=1; drag_src=20+f; drag_idx=found[f].n-1; drag_cnt=1;
                 drag_c[0]=found[f].c[found[f].n-1];
+                float fx = (float)col_x(3+f);
                 drag_off_x=mp.x-fx; drag_off_y=mp.y-TOP_Y;
                 drag_x=mp.x-drag_off_x; drag_y=mp.y-drag_off_y;
                 break;
