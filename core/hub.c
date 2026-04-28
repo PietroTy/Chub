@@ -676,6 +676,8 @@ static void draw_game_frame(void) {
         const char *ctrl2 = "";
         const char *ctrl3 = "";
         const char *ctrl4 = "";
+        const char *ctrl5 = "";
+        const char *ctrl6 = "";
         
         if (strcmp(current_game->name, "ponC") == 0) { 
             int mode = (current_game->get_mode) ? current_game->get_mode() : 0;
@@ -755,5 +757,7 @@ static void draw_game_frame(void) {
         if (ctrl2[0]) DrawText(ctrl2, text_x, text_y + 70, 20, COL_TEXT_MUTED);
         if (ctrl3[0]) DrawText(ctrl3, text_x, text_y + 95, 20, COL_TEXT_MUTED);
         if (ctrl4[0]) DrawText(ctrl4, text_x, text_y + 120, 20, COL_TEXT_MUTED);
+        if (ctrl5[0]) DrawText(ctrl5, text_x, text_y + 145, 20, COL_TEXT_MUTED);
+        if (ctrl6[0]) DrawText(ctrl6, text_x, text_y + 170, 20, COL_TEXT_MUTED);
     }
 }
