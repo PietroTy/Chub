@@ -69,17 +69,15 @@ void ctron_update(void) {
 
 
         if (in_menu) {
-        if (IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_A)) {
-            game_mode = 0;
-            in_menu = 0;
-            cd_num = 3;
-            cd_timer = 0;
-        }
-        if (IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_D)) {
-            game_mode = 1;
-            in_menu = 0;
-            cd_num = 3;
-            cd_timer = 0;
+        if (IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_A)) { game_mode = 0; in_menu = 0; cd_num = 3; cd_timer = 0; }
+        if (IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_D)) { game_mode = 1; in_menu = 0; cd_num = 3; cd_timer = 0; }
+        
+        Vector2 mp = GetMousePosition();
+        Rectangle r1 = { TW / 2 - 260, 240, 240, 40 };
+        Rectangle r2 = { TW / 2 + 40, 240, 200, 40 };
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            if (CheckCollisionPointRec(mp, r1)) { game_mode = 0; in_menu = 0; cd_num = 3; cd_timer = 0; }
+            if (CheckCollisionPointRec(mp, r2)) { game_mode = 1; in_menu = 0; cd_num = 3; cd_timer = 0; }
         }
         return;
     }
@@ -191,8 +189,16 @@ void ctron_draw(void) {
 
     if (in_menu) {
         DrawText(L("SELECIONE O MODO", "SELECT MODE"), TW / 2 - MeasureText(L("SELECIONE O MODO", "SELECT MODE"), 40) / 2, 100, 40, WHITE);
-        Color c1 = (game_mode == 0) ? PURPLE : WHITE;
-        Color c2 = (game_mode == 1) ? PURPLE : WHITE;
+        
+        Vector2 mp = GetMousePosition();
+        Rectangle r1 = { TW / 2 - 260, 240, 240, 40 };
+        Rectangle r2 = { TW / 2 + 40, 240, 200, 40 };
+        
+        Color c1 = CheckCollisionPointRec(mp, r1) ? LIGHTGRAY : WHITE;
+        Color c2 = CheckCollisionPointRec(mp, r2) ? LIGHTGRAY : WHITE;
+        if (game_mode == 0) c1 = PURPLE;
+        if (game_mode == 1) c2 = PURPLE;
+
         DrawText(L("<- 1 Jogador (Vs CPU)", "<- 1 Player (Vs CPU)"), TW / 2 - 250, 250, 20, c1);
         DrawText(L("2 Jogadores ->", "2 Players ->"), TW / 2 + 50, 250, 20, c2);
         DrawText(L("Pressione ESQUERDA ou DIREITA para escolher", "Press LEFT or RIGHT to choose"), TW / 2 - MeasureText(L("Pressione ESQUERDA ou DIREITA para escolher", "Press LEFT or RIGHT to choose"), 20) / 2, 400, 20, DARKGRAY);
@@ -256,6 +262,10 @@ void ctron_unload(void) {
     printf("[CTRON] Game unloaded\n"); 
 }
 
+int ctron_get_mode(void) {
+    return in_menu ? 0 : game_mode;
+}
+
 Game CTRON_GAME = {
     .name = "Ctron",
     .description = "Deixe um rastro de luz e vença seu rival",
@@ -263,4 +273,5 @@ Game CTRON_GAME = {
     .game_width = TW, .game_height = TH,
     .init = ctron_init, .update = ctron_update,
     .draw = ctron_draw, .unload = ctron_unload,
+    .get_mode = ctron_get_mode,
 };

@@ -68,6 +68,9 @@ static int enemy_dir;
 static float enemy_shoot_timer;
 static Bullet enemy_bullets[MAX_BULLETS];
 static int game_over, game_won;
+static int inv_skin = 0;
+static int inv_selection = 0;
+static bool inv_store = false;
 
 static void inv_reset_enemies(void) {
     for (int i = 0; i < ENEMY_COUNT; i++) enemies[i].hp = 0;
@@ -140,6 +143,7 @@ static void inv_reset(void) {
     game_over = 0; game_won = 0; enemy_shoot_timer = 0; level = 1;
     double_shot_timer = 0; freeze_timer = 0; flash_ship_timer = 0; flash_shield_timer = 0;
     boss_spawn_timer = 0; shield_regen_timer = 0; player_shoot_timer = 0;
+    inv_store = false;
     inv_reset_enemies();
     for (int i = 0; i < MAX_BULLETS; i++) { bullets[i].active = 0; enemy_bullets[i].active = 0; }
     for (int i = 0; i < MAX_POWERUPS; i++) powerups[i].active = false;
@@ -153,6 +157,8 @@ static void inv_next_level(void) {
 
 void spaceinvaders_init(void) { 
     cd_num = 3; cd_timer = 0.0f; inv_reset(); 
+    inv_skin = 0; inv_selection = 0; inv_store = false;
+    highscore = hub_load_score(3);
     pop_sound = LoadSound("assets/shared/pop.wav");
     printf("[SPACEINVADERS] Game initialized\n"); 
 }
@@ -161,9 +167,29 @@ void spaceinvaders_update(void) {
     if (cd_num > 0) { cd_timer += GetFrameTime(); cd_num = 3 - (int)cd_timer; if (cd_num > 0) return; }
     float dt = GetFrameTime(); if (dt > 0.05f) dt = 0.05f;
     if (game_over || game_won) {
-        if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE)) {
-            if (score > highscore) { highscore = score; hub_save_score(3, highscore); }
-            inv_reset(); cd_num = 3; cd_timer = 0.0f;
+        if (inv_store) {
+            if (IsKeyPressed(KEY_S) || IsKeyPressed(KEY_ENTER)) inv_store = false;
+            if (IsKeyPressed(KEY_RIGHT)) inv_selection = (inv_selection + 1) % 9;
+            if (IsKeyPressed(KEY_LEFT)) inv_selection = (inv_selection + 8) % 9;
+            if (IsKeyPressed(KEY_DOWN)) inv_selection = (inv_selection + 3) % 9;
+            if (IsKeyPressed(KEY_UP)) inv_selection = (inv_selection + 6) % 9;
+            if (IsKeyPressed(KEY_ONE)) inv_selection = 0;
+            if (IsKeyPressed(KEY_TWO)) inv_selection = 1;
+            if (IsKeyPressed(KEY_THREE)) inv_selection = 2;
+            if (IsKeyPressed(KEY_FOUR)) inv_selection = 3;
+            if (IsKeyPressed(KEY_FIVE)) inv_selection = 4;
+            if (IsKeyPressed(KEY_SIX)) inv_selection = 5;
+            if (IsKeyPressed(KEY_SEVEN)) inv_selection = 6;
+            if (IsKeyPressed(KEY_EIGHT)) inv_selection = 7;
+            if (IsKeyPressed(KEY_NINE)) inv_selection = 8;
+            int thresholds[] = {0, 1000, 2000, 3200, 4500, 6000, 8000, 10000, 12000};
+            if (highscore >= thresholds[inv_selection]) inv_skin = inv_selection;
+        } else {
+            if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE)) {
+                if (score > highscore) { highscore = score; hub_save_score(3, highscore); }
+                inv_reset(); cd_num = 3; cd_timer = 0.0f;
+            }
+            if (IsKeyPressed(KEY_S)) inv_store = true;
         }
         return;
     }
@@ -503,7 +529,8 @@ void spaceinvaders_draw(void) {
         DrawRectangle(ex + 10, ey + 8, 2, 2, (freeze_timer > 0 ? BLUE : BLACK)); DrawRectangle(ex + ENEMY_W - 12, ey + 8, 2, 2, (freeze_timer > 0 ? BLUE : BLACK));
     }
 
-    Color pc = (flash_ship_timer > 0) ? RED : (Color){80,200,255,255};
+    Color ship_colors[] = { (Color){80,200,255,255}, GREEN, RED, YELLOW, PURPLE, ORANGE, WHITE, PINK, GOLD };
+    Color pc = (flash_ship_timer > 0) ? RED : ship_colors[inv_skin];
     DrawRectangle((int)px, (int)py, PLAYER_W, PLAYER_H, pc);
     if (double_shot_timer > 0) { DrawRectangle((int)px+5, (int)py-6, 6, 6, pc); DrawRectangle((int)px+PLAYER_W-11, (int)py-6, 6, 6, pc); }
     else DrawRectangle((int)px+PLAYER_W/2-3, (int)py-6, 6, 6, pc);
@@ -548,16 +575,46 @@ void spaceinvaders_draw(void) {
 
 
     if (game_over || game_won) {
-        DrawRectangle(0, 0, IW, IH, BLACK);
-        if (game_over) DrawText(L("FIM DE JOGO", "GAME OVER"), (IW - MeasureText(L("FIM DE JOGO", "GAME OVER"), 50)) / 2, IH/2-80, 50, RED);
-        else DrawText(L("VITORIA!", "VICTORY!"), (IW - MeasureText(L("VITORIA!", "VICTORY!"), 50)) / 2, IH/2-80, 50, GOLD);
-        
-        DrawText(TextFormat(L("Nivel: %d-%d", "Level: %d-%d"), world, stage), (IW - MeasureText(TextFormat(L("Nivel: %d-%d", "Level: %d-%d"), world, stage), 25)) / 2, IH/2-20, 25, YELLOW);
-        DrawText(TextFormat(L("Pontos: %d", "Score: %d"), score), (IW - MeasureText(TextFormat(L("Pontos: %d", "Score: %d"), score), 30)) / 2, IH/2+30, 30, WHITE);
-        
-        float pulse = 0.5f + 0.5f * sinf((float)GetTime() * 5.0f);
-        Color pulse_c = (Color){200, 200, 200, (unsigned char)(150 + 100 * pulse)};
-        DrawText(L("Pressione ENTER para Reiniciar", "Press ENTER to Restart"), (IW - MeasureText(L("Pressione ENTER para Reiniciar", "Press ENTER to Restart"), 18)) / 2, IH/2+90, 18, pulse_c);
+        if (inv_store) {
+            DrawRectangle(0, 0, IW, IH, BLACK);
+            DrawText(L("LOJA", "SHOP"), (IW - MeasureText(L("LOJA", "SHOP"), 50)) / 2, 40, 50, WHITE);
+            DrawText(TextFormat(L("Recorde: %d", "Highscore: %d"), highscore), (IW - MeasureText(TextFormat(L("Recorde: %d", "Highscore: %d"), highscore), 20)) / 2, 100, 20, GRAY);
+
+            int thresholds[] = {0, 1000, 2000, 3200, 4500, 6000, 8000, 10000, 12000};
+            Color ship_colors[] = { (Color){80,200,255,255}, GREEN, RED, YELLOW, PURPLE, ORANGE, WHITE, PINK, GOLD };
+            for (int i = 0; i < 9; i++) {
+                int row = i / 3, col = i % 3;
+                int x = 180 + col * 120, y = 160 + row * 100;
+
+                if (inv_selection == i) {
+                    float pulse = 0.5f + 0.5f * sinf((float)GetTime() * 6.0f);
+                    DrawRectangle(x - 10, y - 10, 60, 40, (Color){200, 200, 200, (unsigned char)(60 + 40 * pulse)});
+                }
+
+                if (highscore >= thresholds[i]) {
+                    DrawRectangle(x, y, 40, 16, ship_colors[i]);
+                    DrawRectangle(x + 17, y - 6, 6, 6, ship_colors[i]);
+                    DrawText(TextFormat("%d", i + 1), x - 25, y, 20, WHITE);
+                } else {
+                    DrawRectangle(x, y, 40, 16, (Color){30, 30, 30, 255});
+                    DrawText("?", x + 15, y, 20, GRAY);
+                    DrawText(TextFormat("%d", thresholds[i]), x, y + 25, 15, RED);
+                }
+            }
+            DrawText(L("SETAS para navegar | ENTER para selecionar e sair", "ARROWS to navigate | ENTER to select and exit"), (IW - MeasureText(L("SETAS para navegar | ENTER para selecionar e sair", "ARROWS to navigate | ENTER to select and exit"), 18)) / 2, IH - 40, 18, GRAY);
+        } else {
+            DrawRectangle(0, 0, IW, IH, BLACK);
+            if (game_over) DrawText(L("FIM DE JOGO", "GAME OVER"), (IW - MeasureText(L("FIM DE JOGO", "GAME OVER"), 50)) / 2, IH/2-80, 50, RED);
+            else DrawText(L("VITORIA!", "VICTORY!"), (IW - MeasureText(L("VITORIA!", "VICTORY!"), 50)) / 2, IH/2-80, 50, GOLD);
+            
+            DrawText(TextFormat(L("Nivel: %d-%d", "Level: %d-%d"), world, stage), (IW - MeasureText(TextFormat(L("Nivel: %d-%d", "Level: %d-%d"), world, stage), 25)) / 2, IH/2-20, 25, YELLOW);
+            DrawText(TextFormat(L("Pontos: %d", "Score: %d"), score), (IW - MeasureText(TextFormat(L("Pontos: %d", "Score: %d"), score), 30)) / 2, IH/2+30, 30, WHITE);
+            
+            float pulse = 0.5f + 0.5f * sinf((float)GetTime() * 5.0f);
+            Color pulse_c = (Color){200, 200, 200, (unsigned char)(150 + 100 * pulse)};
+            DrawText(L("Pressione ENTER para Reiniciar", "Press ENTER to Restart"), (IW - MeasureText(L("Pressione ENTER para Reiniciar", "Press ENTER to Restart"), 18)) / 2, IH/2+90, 18, pulse_c);
+            DrawText(L("Pressione 'S' para Loja", "Press 'S' for Shop"), (IW - MeasureText(L("Pressione 'S' para Loja", "Press 'S' for Shop"), 18)) / 2, IH/2+120, 18, pulse_c);
+        }
     }
     if (cd_num > 0) { char t[4]; snprintf(t, 4, "%d", cd_num); DrawText(t, (IW - MeasureText(t, 100)) / 2, (IH-100)/2, 100, (Color){255,255,200,200}); }
 }

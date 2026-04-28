@@ -331,7 +331,17 @@ void tectris_update(void) {
     if (IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_A)) { current.x -= 1; if (tc_collision()) current.x += 1; }
     if (IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_D)) { current.x += 1; if (tc_collision()) current.x -= 1; }
     if (IsKeyPressed(KEY_UP) || IsKeyPressed(KEY_W)) { tc_rotate(); if (tc_collision()) tc_rotate_back(); }
-    if (IsKeyPressed(KEY_C) || IsKeyPressed(KEY_LEFT_SHIFT)) { tc_hold_piece(); }
+    if (IsKeyPressed(KEY_C) || IsKeyPressed(KEY_LEFT_SHIFT) || IsKeyPressed(KEY_RIGHT_SHIFT)) { tc_hold_piece(); }
+
+    if (IsKeyPressed(KEY_SPACE)) {
+        while (!tc_collision()) current.y++;
+        current.y--;
+        tc_lock();
+        if (sound_loaded) { SetSoundPitch(pop_sound, 0.9f); PlaySound(pop_sound); }
+        tc_clear_lines();
+        tc_spawn_piece();
+        tc_lastFallTime = currentTime;
+    }
 
     if (currentTime - tc_lastFallTime >= tc_fallInterval) {
         tc_lastFallTime = currentTime;
@@ -360,17 +370,17 @@ void tectris_draw(void) {
     // ── Sidebar (Right Panel) ──
     int sb_x = TC_PLAYFIELD_W + 10;
     
-    // Hold Piece
-    DrawText(L("BANCO", "HOLD"), sb_x + 5, 20, 20, LIGHTGRAY);
-    DrawRectangleLines(sb_x, 50, 130, 110, GRAY);
-    if (has_hold) {
-        tc_draw_piece_centered(hold_piece, sb_x, 50, 130, 110, 25);
-    }
-
     // Next Piece
-    DrawText(L("PROXIMA", "NEXT"), sb_x + 5, 180, 20, LIGHTGRAY);
+    DrawText(L("PROXIMA", "NEXT"), sb_x + 5, 20, 20, LIGHTGRAY);
+    DrawRectangleLines(sb_x, 50, 130, 110, GRAY);
+    tc_draw_piece_centered(next_piece, sb_x, 50, 130, 110, 25);
+
+    // Hold Piece
+    DrawText(L("BANCO", "HOLD"), sb_x + 5, 180, 20, LIGHTGRAY);
     DrawRectangleLines(sb_x, 210, 130, 110, GRAY);
-    tc_draw_piece_centered(next_piece, sb_x, 210, 130, 110, 25);
+    if (has_hold) {
+        tc_draw_piece_centered(hold_piece, sb_x, 210, 130, 110, 25);
+    }
 
     // Score & Highscore
     DrawText(L("PONTOS", "SCORE"), sb_x + 5, 350, 20, LIGHTGRAY);

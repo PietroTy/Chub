@@ -27,8 +27,8 @@ static Sound pop_sound;
 static bool sound_loaded = false;
 static int dragging, drag_src, drag_idx, drag_cnt;
 static Card drag_c[MAX_PILE];
-static float drag_x, drag_y;
-static int sol_won;
+static float drag_x, drag_y, drag_off_x, drag_off_y;
+static int sol_won, sol_lost;
 
 /* pile_x: columns 0-6 for the 7 tableau (and stock/waste/foundation mapped) */
 static int col_x(int i) { return 14 + i * (CARD_W + 13); }
@@ -116,7 +116,7 @@ static void sol_reset(void){
         tab[i].n++;
     }
     while(idx<52) stock.c[stock.n++]=deck[idx++];
-    dragging=0; sol_won=0;
+    dragging=0; sol_won=0; sol_lost=0;
 }
 
 void solitairecpider_init(void){
@@ -159,8 +159,61 @@ static int auto_to_foundation(Card c,int src_pile,int src_idx){
     return 0;
 }
 
+static int sol_has_moves(void) {
+    // 1. Foundation moves (from Tableau or Waste)
+    for (int f = 0; f < 4; f++) {
+        if (waste.n > 0 && can_found(waste.c[waste.n-1], f)) return 1;
+        for (int i = 0; i < 7; i++) {
+            if (tab[i].n > 0 && can_found(tab[i].c[tab[i].n-1], f)) return 1;
+        }
+    }
+
+    // 2. Tableau moves
+    for (int i = 0; i < 7; i++) {
+        Card *dest_top = (tab[i].n > 0) ? &tab[i].c[tab[i].n-1] : NULL;
+        
+        // From Waste
+        if (waste.n > 0) {
+            if (dest_top) { if (can_tab(waste.c[waste.n-1], *dest_top)) return 1; }
+            else if (waste.c[waste.n-1].rank == 13) return 1;
+        }
+        
+        // From other Tableau piles
+        for (int src = 0; src < 7; src++) {
+            if (src == i || tab[src].n == 0) continue;
+            for (int j = 0; j < tab[src].n; j++) {
+                if (!tab[src].c[j].face_up) continue;
+                if (dest_top) { if (can_tab(tab[src].c[j], *dest_top)) return 1; }
+                else if (tab[src].c[j].rank == 13 && j > 0) return 1; // King to empty only if it reveals something
+                break; // Only check the bottom-most face-up card of a stack
+            }
+        }
+    }
+
+    // 3. Stock/Waste cycle potential
+    // If there's ANY card in stock or waste that can be placed, it's not a stalemate
+    for (int k = 0; k < waste.n; k++) {
+        Card c = waste.c[k];
+        for (int f = 0; f < 4; f++) if (can_found(c, f)) return 1;
+        for (int i = 0; i < 7; i++) {
+            if (tab[i].n > 0) { if (can_tab(c, tab[i].c[tab[i].n-1])) return 1; }
+            else if (c.rank == 13) return 1;
+        }
+    }
+    for (int k = 0; k < stock.n; k++) {
+        Card c = stock.c[k];
+        for (int f = 0; f < 4; f++) if (can_found(c, f)) return 1;
+        for (int i = 0; i < 7; i++) {
+            if (tab[i].n > 0) { if (can_tab(c, tab[i].c[tab[i].n-1])) return 1; }
+            else if (c.rank == 13) return 1;
+        }
+    }
+
+    return 0;
+}
+
 void solitairecpider_update(void){
-    if(sol_won){if(IsKeyPressed(KEY_ENTER)||IsKeyPressed(KEY_SPACE))sol_reset();return;}
+    if(sol_won||sol_lost){if(IsKeyPressed(KEY_ENTER)||IsKeyPressed(KEY_SPACE))sol_reset();return;}
     if(IsKeyPressed(KEY_R)) sol_reset();
 
     Vector2 mp=GetMousePosition();
@@ -208,7 +261,8 @@ void solitairecpider_update(void){
         if(CheckCollisionPointRec(mp,wr)){
             dragging=1; drag_src=11; drag_idx=waste.n-1; drag_cnt=1;
             drag_c[0]=waste.c[waste.n-1];
-            drag_x=mp.x-CARD_W/2; drag_y=mp.y-CARD_H/2;
+            drag_off_x=mp.x-col_x(1); drag_off_y=mp.y-TOP_Y;
+            drag_x=mp.x-drag_off_x; drag_y=mp.y-drag_off_y;
         }
     }
 
@@ -220,7 +274,8 @@ void solitairecpider_update(void){
             if(CheckCollisionPointRec(mp,fr)){
                 dragging=1; drag_src=20+f; drag_idx=found[f].n-1; drag_cnt=1;
                 drag_c[0]=found[f].c[found[f].n-1];
-                drag_x=mp.x-CARD_W/2; drag_y=mp.y-CARD_H/2;
+                drag_off_x=mp.x-fx; drag_off_y=mp.y-TOP_Y;
+                drag_x=mp.x-drag_off_x; drag_y=mp.y-drag_off_y;
                 break;
             }
         }
@@ -239,14 +294,22 @@ void solitairecpider_update(void){
                     /* Grab from j upward (j is the one clicked, higher indices are on top visually) */
                     dragging=1; drag_src=i; drag_idx=j; drag_cnt=tab[i].n-j;
                     for(int k=0;k<drag_cnt;k++) drag_c[k]=tab[i].c[j+k];
-                    drag_x=mp.x-CARD_W/2; drag_y=mp.y-CARD_H/2;
+                    drag_off_x=mp.x-col_x(i); drag_off_y=mp.y-cy;
+                    drag_x=mp.x-drag_off_x; drag_y=mp.y-drag_off_y;
                     break;
                 }
             }
         }
     }
 
-    if(dragging){drag_x=mp.x-CARD_W/2; drag_y=mp.y-CARD_H/2;}
+    if(dragging){
+        drag_x=mp.x-drag_off_x; drag_y=mp.y-drag_off_y;
+        /* Clamp to screen with a small margin so it never fully disappears */
+        if (drag_x < -CARD_W + 20) drag_x = -CARD_W + 20;
+        if (drag_x > SW - 20) drag_x = SW - 20;
+        if (drag_y < -CARD_H + 20) drag_y = -CARD_H + 20;
+        if (drag_y > SH - 20) drag_y = SH - 20;
+    }
 
     if(IsMouseButtonReleased(MOUSE_LEFT_BUTTON)&&dragging){
         int placed=0;
@@ -327,6 +390,8 @@ void solitairecpider_update(void){
             for (int f = 0; f < 4; f++) total += found[f].n;
             if (total == 52) sol_won = 1;
         }
+
+        if (!sol_won && !sol_has_moves()) sol_lost = 1;
     }
 }
 
@@ -442,6 +507,19 @@ void solitairecpider_draw(void) {
         const char *hint = L("Pressione ENTER para Reiniciar", "Press ENTER to Restart");
         int hint_w = MeasureText(hint, 20);
         DrawText(hint, (SW - hint_w) / 2, center_y + 140, 20, (Color){200, 200, 200, (unsigned char)(150 + 100 * pulse)});
+    }
+
+    if (sol_lost) {
+        DrawRectangle(0, 0, SW, SH, (Color){0, 0, 0, 180});
+        int center_y = SH / 2 - 40;
+        const char *wt = L("SEM MOVIMENTOS!", "NO MOVES!");
+        int wt_w = MeasureText(wt, 50);
+        DrawText(wt, (SW - wt_w) / 2, center_y, 50, LIGHTGRAY);
+        
+        float pulse = 0.5f + 0.5f * sinf((float)GetTime() * 4.0f);
+        const char *hint = L("Pressione ENTER para Tentar de Novo", "Press ENTER to Try Again");
+        int hint_w = MeasureText(hint, 20);
+        DrawText(hint, (SW - hint_w) / 2, center_y + 80, 20, (Color){200, 200, 200, (unsigned char)(150 + 100 * pulse)});
     }
 
 

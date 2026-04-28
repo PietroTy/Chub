@@ -264,13 +264,23 @@ void hub_update(void) {
     if (IsKeyPressed(KEY_M)) hub_set_mute(!is_muted);
     if (IsKeyPressed(KEY_L)) hub_set_language(current_lang == LANG_PT ? LANG_EN : LANG_PT);
 
+    update_settings_buttons();
+
+    // Click on CHUB logo to return to menu
+    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        Rectangle logo_rect = { 10, 5, (float)MeasureText("CHUB", 30) + 10, 40 };
+        if (CheckCollisionPointRec(GetMousePosition(), logo_rect)) {
+            if (state == STATE_GAME) {
+                hub_return_to_menu();
+            }
+        }
+    }
+
     if (state == STATE_MENU) {
         update_menu();
     } else if (state == STATE_GAME) {
         update_game();
     }
-    
-    update_settings_buttons();
 }
 
 void hub_draw(void) {
@@ -340,6 +350,7 @@ Game *hub_get_current_game(void) {
 
 static void update_menu(void) {
     int screen_w = GetScreenWidth();
+    int screen_h = GetScreenHeight();
 
     if (IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_D)) {
         hovered_index = (hovered_index + 1) % game_count;
@@ -363,11 +374,15 @@ static void update_menu(void) {
     // Mouse click handling for carousel
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         Vector2 mouse = GetMousePosition();
-        int screen_h = GetScreenHeight();
         // Ignore clicks in the bottom-left settings button area
         if (mouse.x < 120 && mouse.y > screen_h - 70) return;
         
-        int card_w = 280;
+        // Use dynamic card width for collision (matching draw_menu)
+        int card_h = (int)(screen_h * 0.55f);
+        if (card_h > 400) card_h = 400;
+        if (card_h < 200) card_h = 200;
+        int card_w = (int)(card_h * 0.75f);
+
         int center_x = screen_w / 2;
         if (mouse.x > center_x - card_w/2 && mouse.x < center_x + card_w/2) {
             hub_select_game(hovered_index);
@@ -383,6 +398,16 @@ static void draw_menu(void) {
     int screen_w = GetScreenWidth();
     int screen_h = GetScreenHeight();
 
+    // ── Header Logo ──
+    Rectangle logo_rect = { 10, 5, (float)MeasureText("CHUB", 30) + 10, 40 };
+    bool logo_hover = CheckCollisionPointRec(GetMousePosition(), logo_rect);
+    DrawText("CHUB", 15, 10, 30, logo_hover ? COL_ACCENT : COL_TEXT_PRIMARY);
+
+    // ── Layout Scale Factors ──
+    float ui_scale = screen_h / 720.0f;
+    if (ui_scale > 1.0f) ui_scale = 1.0f;
+    if (ui_scale < 0.6f) ui_scale = 0.6f;
+
     // ── Background subtle pattern ──
     for (int i = 0; i < screen_w; i += 40) {
         int alpha = 8 + (int)(4.0f * sinf(menu_anim_time * 0.5f + i * 0.02f));
@@ -394,25 +419,29 @@ static void draw_menu(void) {
     }
 
     // ── Title "Chub" ──
-    const char *title = L("Chub Game Hub", "Chub Game Hub");
-    int title_size = 80;
+    const char *title = L("Chub", "Chub");
+    int title_size = (int)(80 * ui_scale);
+    if (title_size < 30) title_size = 30;
     int title_w = MeasureText(title, title_size);
     int title_x = (screen_w - title_w) / 2;
-    int title_y = 60;
+    int title_y = (int)(screen_h * 0.08f);
     float glow_pulse = 0.6f + 0.4f * sinf(menu_anim_time * 2.0f);
     DrawText(title, title_x, title_y, title_size, COL_ACCENT);
 
-    const char *subtitle = L("Game Hub para jogos em C", "C-based Game Hub");
-    int sub_size = 24;
+    const char *subtitle = L("Jogos baseados em C", "C-based Games");
+    int sub_size = (int)(24 * ui_scale);
+    if (sub_size < 14) sub_size = 14;
     int sub_w = MeasureText(subtitle, sub_size);
     DrawText(subtitle, (screen_w - sub_w) / 2, title_y + title_size + 5, sub_size, COL_TEXT_SECONDARY);
 
     // ── Carousel ──
-    int card_w = 300;
-    int card_h = 400;
-    int card_gap = 40;
+    int card_h = (int)(screen_h * 0.55f);
+    if (card_h > 400) card_h = 400;
+    if (card_h < 200) card_h = 200;
+    int card_w = (int)(card_h * 0.75f);
+    int card_gap = (int)(card_w * 0.15f);
     int center_x = screen_w / 2;
-    int cy = screen_h / 2 + 20;
+    int cy = screen_h / 2 + (int)(screen_h * 0.04f);
 
     for (int i = 0; i < game_count; i++) {
         float offset = i - carousel_offset;
@@ -454,26 +483,29 @@ static void draw_menu(void) {
         if (alpha_f > 0.1f) {
             char num[16];
             snprintf(num, sizeof(num), "%d", i + 1);
-            int badge_size = (int)(40 * scale);
+            int badge_size = (int)(40 * scale * ui_scale);
+            if (badge_size < 10) badge_size = 10;
             Color num_col = is_center ? COL_ACCENT : COL_ACCENT_DIM;
             num_col.a = (unsigned char)(num_col.a * alpha_f);
-            DrawText(num, x + 20, y + 20, badge_size, num_col);
+            DrawText(num, x + (int)(20 * scale * ui_scale), y + (int)(20 * scale * ui_scale), badge_size, num_col);
 
-            int name_size = (int)(48 * scale);
+            int name_size = (int)(48 * scale * ui_scale);
+            if (name_size < 12) name_size = 12;
             int nw = MeasureText(games[i]->name, name_size);
-            // Shrink name if it's exceptionally long (e.g. DoodleJump on smaller screens)
-            while (nw > w - 20 && name_size > 15) {
+            // Shrink name if it's exceptionally long
+            while (nw > w - 20 && name_size > 12) {
                 name_size--;
                 nw = MeasureText(games[i]->name, name_size);
             }
             Color name_col = COL_TEXT_PRIMARY;
             name_col.a = (unsigned char)(name_col.a * alpha_f);
-            DrawText(games[i]->name, x + (w - nw)/2, y + h/2 - 60, name_size, name_col);
+            DrawText(games[i]->name, x + (w - nw)/2, y + h/2 - (int)(60 * scale * ui_scale), name_size, name_col);
 
             if (is_center && games[i]->description) {
-                float desc_size = 24.0f * scale;
-                float padding = 20.0f * scale;
-                DrawTextWrapped(L(games[i]->description, games[i]->description_en), (float)x + padding, (float)y + h/2 + 10, (float)w - padding * 2, desc_size, COL_TEXT_SECONDARY);
+                float desc_size = 24.0f * scale * ui_scale;
+                if (desc_size < 10) desc_size = 10;
+                float padding = 20.0f * scale * ui_scale;
+                DrawTextWrapped(L(games[i]->description, games[i]->description_en), (float)x + padding, (float)y + h/2 + (int)(10 * scale * ui_scale), (float)w - padding * 2, desc_size, COL_TEXT_SECONDARY);
             }
         }
     }
@@ -482,18 +514,25 @@ static void draw_menu(void) {
     float arrow_pulse = 0.5f + 0.5f * sinf(menu_anim_time * 5.0f);
     Color arrow_col = COL_ACCENT;
     arrow_col.a = (unsigned char)(200 + 55 * arrow_pulse);
-    DrawText("<", center_x - card_w/2 - 60, cy - 20, 40, arrow_col);
-    DrawText(">", center_x + card_w/2 + 40, cy - 20, 40, arrow_col);
+    int arrow_size = (int)(40 * ui_scale);
+    if (arrow_size < 20) arrow_size = 20;
+    DrawText("<", center_x - card_w/2 - (int)(60 * ui_scale), cy - arrow_size/2, arrow_size, arrow_col);
+    DrawText(">", center_x + card_w/2 + (int)(40 * ui_scale), cy - arrow_size/2, arrow_size, arrow_col);
 
     // ── Footer ──
     const char *footer = L("Use Setas Esquerda/Direita e ENTER", "Use Left/Right Arrows and ENTER");
-    int footer_size = 22;
+    int footer_size = (int)(22 * ui_scale);
+    if (footer_size < 12) footer_size = 12;
     int footer_w = MeasureText(footer, footer_size);
     float footer_alpha = 0.4f + 0.3f * sinf(menu_anim_time * 1.0f);
     Color footer_col = COL_TEXT_MUTED;
     footer_col.a = (unsigned char)(255 * footer_alpha);
-    DrawText(footer, (screen_w - footer_w) / 2, screen_h - 75, footer_size, footer_col);
-    DrawText("@PietroTy - 2026", (screen_w - MeasureText("@PietroTy - 2026", 28)) / 2, screen_h - 40, 28, COL_TEXT_MUTED);
+    DrawText(footer, (screen_w - footer_w) / 2, screen_h - (int)(75 * ui_scale), footer_size, footer_col);
+    
+    int credit_size = (int)(28 * ui_scale);
+    if (credit_size < 14) credit_size = 14;
+    int credit_w = MeasureText("@PietroTy - 2026", credit_size);
+    DrawText("@PietroTy - 2026", (screen_w - credit_w) / 2, screen_h - (int)(40 * ui_scale), credit_size, COL_TEXT_MUTED);
 }
 
 // ══════════════════════════════════════════════
@@ -579,7 +618,9 @@ static void draw_game_frame(void) {
     DrawLine(0, info_bar_h, screen_w, info_bar_h, COL_BORDER);
 
     // Left: Chub logo
-    DrawText("Chub", 12, 8, 22, COL_ACCENT);
+    Rectangle logo_rect = { 10, 5, (float)MeasureText("CHUB", 30) + 10, 40 };
+    bool logo_hover = CheckCollisionPointRec(GetMousePosition(), logo_rect);
+    DrawText("CHUB", 15, 10, 30, logo_hover ? COL_ACCENT : COL_TEXT_PRIMARY);
 
     // Center: game name
     if (current_game->name) {
@@ -620,7 +661,7 @@ static void draw_game_frame(void) {
         }
 
         if (thanks) {
-            DrawText(L("Agradecimento:", "Credits:"), text_x, text_y + 110, 20, COL_TEXT_SECONDARY);
+            DrawText(L("Agradecimento:", "Thanks:"), text_x, text_y + 110, 20, COL_TEXT_SECONDARY);
             DrawText(thanks, text_x, text_y + 135, 20, COL_TEXT_MUTED);
         }
     }
@@ -637,8 +678,14 @@ static void draw_game_frame(void) {
         const char *ctrl4 = "";
         
         if (strcmp(current_game->name, "ponC") == 0) { 
-            ctrl1 = L("W/S ou Setas", "W/S or Arrows"); 
-            ctrl2 = L("(P1 e P2)", "(P1 and P2)");
+            int mode = (current_game->get_mode) ? current_game->get_mode() : 0;
+            if (mode == 0) { // Vs CPU
+                ctrl1 = L("W/S ou Cima/Baixo", "W/S or Up/Down"); 
+                ctrl2 = L("Para mover", "To move");
+            } else { // 2 Players
+                ctrl1 = L("P1: W/S | P2: Cima/Baixo", "P1: W/S | P2: Up/Down"); 
+                ctrl2 = L("Para mover", "To move");
+            }
         }
         else if (strcmp(current_game->name, "Crappy bird") == 0) { 
             ctrl1 = L("Espaço: Pular", "Space: Jump"); 
@@ -647,26 +694,44 @@ static void draw_game_frame(void) {
         else if (strcmp(current_game->name, "snaCke") == 0) { 
             ctrl1 = L("Setas / WASD", "Arrows / WASD"); 
             ctrl2 = L("Para mover", "To move"); 
+            ctrl3 = L("S: Loja", "S: Shop");
         }
         else if (strcmp(current_game->name, "teCtris") == 0) { 
             ctrl1 = L("Setas / WASD", "Arrows / WASD"); 
-            ctrl2 = L("Espaço: Drop", "Space: Drop"); 
+            ctrl2 = L("Espaço / Baixo: Cair", "Space / Down: Drop"); 
             ctrl3 = L("C / Shift: Banco", "C / Shift: Hold"); 
             ctrl4 = L("Cima: Gira", "Up: Rotate"); 
         }
         else if (strcmp(current_game->name, "mortal Combat") == 0) { 
-            ctrl1 = L("P1: WASD+UIOP", "P1: WASD+UIOP"); 
-            ctrl2 = L("P2: Setas+Num", "P2: Arrows+Num"); 
-            ctrl3 = L("H/J: Golpes", "H/J: Attacks");
-            ctrl4 = L("K/L: Hadouken", "K/L: Hadouken");
+            int mode = (current_game->get_mode) ? current_game->get_mode() : 0;
+            if (mode == 0) { // Vs CPU
+                ctrl1 = L("A/D ou Esquerda/Direita", "A/D or Left/Right"); 
+                ctrl2 = L("Para mover", "To move"); 
+                ctrl3 = L("V/1: Soco", "V/1: Punch"); 
+                ctrl4 = L("C/2: Chute", "C/2: Kick");
+            } else { // 2 Players
+                ctrl1 = L("P1: A/D | P2: Esquerda/Direita", "P1: A/D | P2: Left/Right"); 
+                ctrl2 = L("Para mover", "To move"); 
+                ctrl3 = L("P1: V | P2: 1: Soco", "P1: V | P2: 1: Punch"); 
+                ctrl4 = L("P1: C | P2: 2: Chute", "P1: C | P2: 2: Kick");
+            }
+            ctrl5 = L("Tras: Defende", "Back: Block");
+            ctrl6 = L("Cima: Pula | Baixo: Agacha", "Up: Jump | Down: Crouch");
         }
         else if (strcmp(current_game->name, "Ctron") == 0) { 
-            ctrl1 = L("P1: WASD", "P1: WASD"); 
-            ctrl2 = L("P2: Setas", "P2: Arrows"); 
+            int mode = (current_game->get_mode) ? current_game->get_mode() : 0;
+            if (mode == 0) { // Vs CPU
+                ctrl1 = L("WASD ou Setas", "WASD or Arrows"); 
+                ctrl2 = L("Para mover", "To move");
+            } else { // 2 Players
+                ctrl1 = L("P1: WASD | P2: Setas", "P1: WASD | P2: Arrows"); 
+                ctrl2 = L("Para mover", "To move");
+            }
         }
         else if (strcmp(current_game->name, "spaCe invaders") == 0) { 
             ctrl1 = L("AD / Setas", "AD / Arrows"); 
-            ctrl2 = L("Espaço: Atirar", "Space: Fire"); 
+            ctrl2 = L("Espaço/Cima: Atirar", "Space/Up: Fire"); 
+            ctrl3 = L("S: Loja", "S: Shop");
         }
         else if (strcmp(current_game->name, "Crazy jump") == 0) { 
             ctrl1 = L("AD ou Setas", "AD or Arrows"); 
@@ -683,7 +748,7 @@ static void draw_game_frame(void) {
         else if (strcmp(current_game->name, "solitaire Cpider") == 0) {
             ctrl1 = L("Mouse: Arrasta", "Mouse: Drag");
             ctrl2 = L("R: Reiniciar", "R: Restart");
-            ctrl3 = L("DblClick: Base", "DblClick: Found.");
+            ctrl3 = L("DblClick: Base", "DblClick: Found");
         }
 
         if (ctrl1[0]) DrawText(ctrl1, text_x, text_y + 45, 20, COL_TEXT_MUTED);

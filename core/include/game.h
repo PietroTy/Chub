@@ -19,6 +19,7 @@ typedef struct Game {
     void (*update)(void);      // Called every frame while the game is active
     void (*draw)(void);        // Called every frame to draw (at internal resolution)
     void (*unload)(void);      // Called when returning to the menu
+    int (*get_mode)(void);     // Returns 0 for 1P/CPU, 1 for 2P
 } Game;
 
 #endif // GAME_H

@@ -153,7 +153,7 @@ void crazyjump_update(void) {
             if (IsKeyPressed(KEY_DOWN)) dj_selection = (dj_selection + 3) % 9;
             if (IsKeyPressed(KEY_UP)) dj_selection = (dj_selection + 6) % 9;
 
-            int thresholds[] = {0, 500, 1000, 2000, 3500, 5000, 7500, 10000, 15000};
+            int thresholds[] = {0, 400, 800, 1300, 2000, 2800, 3800, 4800, 6000};
             if (dj_highscore >= thresholds[dj_selection]) dj_skin = dj_selection;
         } else {
             if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE)) { dj_reset(); cd_num = 3; cd_timer = 0.0f; }
@@ -498,7 +498,7 @@ void crazyjump_draw(void) {
             DrawText(L("LOJA", "SHOP"), (DW - MeasureText(L("LOJA", "SHOP"), 40)) / 2, 40, 40, WHITE);
             DrawText(TextFormat(L("Recorde: %d", "Highscore: %d"), dj_highscore), (DW - MeasureText(TextFormat(L("Recorde: %d", "Highscore: %d"), dj_highscore), 20)) / 2, 90, 20, GRAY);
 
-            int thresholds[] = {0, 500, 1000, 2000, 3500, 5000, 7500, 10000, 15000};
+            int thresholds[] = {0, 400, 800, 1300, 2000, 2800, 3800, 4800, 6000};
             for (int i = 0; i < 9; i++) {
                 int row = i / 3, col = i % 3;
                 int x = 60 + col * 110, y = 160 + row * 110;

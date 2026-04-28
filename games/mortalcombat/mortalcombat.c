@@ -1,7 +1,7 @@
 /**
  * @file mortalcombat.c
  * @brief Fighting game — rectangle-based, 2 players, Chub style.
- * P1: WASD move, U=punch, I=kick, O=block
+ * P1: WASD move, V=punch, C=kick
  * P2: Arrows move, KP1=punch, KP2=kick, KP3=block
  */
 #include <math.h>
@@ -615,17 +615,15 @@ void mortalcombat_update(void) {
 
 
     if (in_menu) {
-        if (IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_A)) {
-            game_mode = 0;
-            in_menu = false;
-            cd_num = 3;
-            cd_timer = 0;
-        }
-        if (IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_D)) {
-            game_mode = 1;
-            in_menu = false;
-            cd_num = 3;
-            cd_timer = 0;
+        if (IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_A)) { game_mode = 0; in_menu = false; cd_num = 3; cd_timer = 0; }
+        if (IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_D)) { game_mode = 1; in_menu = false; cd_num = 3; cd_timer = 0; }
+        
+        Vector2 mp = GetMousePosition();
+        Rectangle r1 = { FW / 2 - 260, 240, 240, 40 };
+        Rectangle r2 = { FW / 2 + 40, 240, 200, 40 };
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            if (CheckCollisionPointRec(mp, r1)) { game_mode = 0; in_menu = false; cd_num = 3; cd_timer = 0; }
+            if (CheckCollisionPointRec(mp, r2)) { game_mode = 1; in_menu = false; cd_num = 3; cd_timer = 0; }
         }
         return;
     }
@@ -647,16 +645,16 @@ void mortalcombat_update(void) {
     bool p1_dn    = IsKeyDown(KEY_S);
     bool p1_lt    = IsKeyDown(KEY_A);
     bool p1_rt    = IsKeyDown(KEY_D);
-    bool p1_punch = IsKeyPressed(KEY_U);
-    bool p1_kick  = IsKeyPressed(KEY_I);
+    bool p1_punch = IsKeyPressed(KEY_V);
+    bool p1_kick  = IsKeyPressed(KEY_C);
 
     if (game_mode == 0) {
         if (IsKeyDown(KEY_UP)) p1_up = true;
         if (IsKeyDown(KEY_DOWN)) p1_dn = true;
         if (IsKeyDown(KEY_LEFT)) p1_lt = true;
         if (IsKeyDown(KEY_RIGHT)) p1_rt = true;
-        if (IsKeyPressed(KEY_KP_1)) p1_punch = true;
-        if (IsKeyPressed(KEY_KP_2)) p1_kick = true;
+        if (IsKeyPressed(KEY_KP_1) || IsKeyPressed(KEY_ONE)) p1_punch = true;
+        if (IsKeyPressed(KEY_KP_2) || IsKeyPressed(KEY_TWO)) p1_kick = true;
     }
 
     bool p2_up, p2_dn, p2_lt, p2_rt, p2_punch, p2_kick;
@@ -665,8 +663,8 @@ void mortalcombat_update(void) {
         p2_dn    = IsKeyDown(KEY_DOWN);
         p2_lt    = IsKeyDown(KEY_LEFT);
         p2_rt    = IsKeyDown(KEY_RIGHT);
-        p2_punch = IsKeyPressed(KEY_KP_1);
-        p2_kick  = IsKeyPressed(KEY_KP_2);
+        p2_punch = IsKeyPressed(KEY_KP_1) || IsKeyPressed(KEY_ONE);
+        p2_kick  = IsKeyPressed(KEY_KP_2) || IsKeyPressed(KEY_TWO);
     } else {
         p2_up = p2_dn = p2_lt = p2_rt = p2_punch = p2_kick = false;
         float dist = p1.x - p2.x; // positive if p1 is to the right
@@ -731,8 +729,16 @@ void mortalcombat_draw(void) {
     if (in_menu) {
         DrawRectangle(0, 0, FW, FH, BLACK);
         DrawText(L("SELECIONE O MODO", "SELECT MODE"), FW / 2 - MeasureText(L("SELECIONE O MODO", "SELECT MODE"), 40) / 2, 100, 40, WHITE);
-        DrawText(L("<- 1 Jogador (Vs CPU)", "<- 1 Player (Vs CPU)"), FW / 2 - 250, 250, 20, WHITE);
-        DrawText(L("2 Jogadores ->", "2 Players ->"), FW / 2 + 50, 250, 20, WHITE);
+        
+        Vector2 mp = GetMousePosition();
+        Rectangle r1 = { FW / 2 - 260, 240, 240, 40 };
+        Rectangle r2 = { FW / 2 + 40, 240, 200, 40 };
+        
+        Color c1 = CheckCollisionPointRec(mp, r1) ? LIGHTGRAY : WHITE;
+        Color c2 = CheckCollisionPointRec(mp, r2) ? LIGHTGRAY : WHITE;
+
+        DrawText(L("<- 1 Jogador (Vs CPU)", "<- 1 Player (Vs CPU)"), FW / 2 - 250, 250, 20, c1);
+        DrawText(L("2 Jogadores ->", "2 Players ->"), FW / 2 + 50, 250, 20, c2);
         DrawText(L("Pressione ESQUERDA ou DIREITA para escolher", "Press LEFT or RIGHT to choose"), FW / 2 - MeasureText(L("Pressione ESQUERDA ou DIREITA para escolher", "Press LEFT or RIGHT to choose"), 20) / 2, 400, 20, DARKGRAY);
         return;
     }
@@ -784,6 +790,10 @@ void mortalcombat_unload(void) {
     printf("[MORTALCOMBAT] Game unloaded\n");
 }
 
+int mortalcombat_get_mode(void) {
+    return in_menu ? 0 : game_mode;
+}
+
 Game MORTALCOMBAT_GAME = {
     .name        = "mortal Combat",
     .description = "Combate intenso em arena pixel-art",
@@ -794,4 +804,5 @@ Game MORTALCOMBAT_GAME = {
     .update      = mortalcombat_update,
     .draw        = mortalcombat_draw,
     .unload      = mortalcombat_unload,
+    .get_mode    = mortalcombat_get_mode,
 };

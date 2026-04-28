@@ -152,17 +152,15 @@ void ponc_update(void) {
     switch (ponc_state) {
 
                 case PONC_STATE_MENU: {
-            if (IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_A)) {
-                game_mode = 0;
-                start_countdown();
-                countdown_num = 3;
-                state_timer = 0.0f;
-            }
-            if (IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_D)) {
-                game_mode = 1;
-                start_countdown();
-                countdown_num = 3;
-                state_timer = 0.0f;
+            if (IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_A)) { game_mode = 0; start_countdown(); }
+            if (IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_D)) { game_mode = 1; start_countdown(); }
+            
+            Vector2 mp = GetMousePosition();
+            Rectangle r1 = { PONC_WIDTH / 2 - 210, 240, 240, 40 };
+            Rectangle r2 = { PONC_WIDTH / 2 + 40, 240, 200, 40 };
+            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                if (CheckCollisionPointRec(mp, r1)) { game_mode = 0; start_countdown(); }
+                if (CheckCollisionPointRec(mp, r2)) { game_mode = 1; start_countdown(); }
             }
             break;
         }
@@ -362,8 +360,14 @@ void ponc_draw(void) {
     if (ponc_state == PONC_STATE_MENU) {
         DrawText(L("SELECIONE O MODO", "SELECT MODE"), PONC_WIDTH / 2 - MeasureText(L("SELECIONE O MODO", "SELECT MODE"), 40) / 2, 100, 40, WHITE);
         
-        Color c1 = (game_mode == 0) ? PURPLE : WHITE;
-        Color c2 = (game_mode == 1) ? PURPLE : WHITE;
+        Vector2 mp = GetMousePosition();
+        Rectangle r1 = { PONC_WIDTH / 2 - 210, 240, 240, 40 };
+        Rectangle r2 = { PONC_WIDTH / 2 + 40, 240, 200, 40 };
+        
+        Color c1 = CheckCollisionPointRec(mp, r1) ? LIGHTGRAY : WHITE;
+        Color c2 = CheckCollisionPointRec(mp, r2) ? LIGHTGRAY : WHITE;
+        if (game_mode == 0) c1 = PURPLE;
+        if (game_mode == 1) c2 = PURPLE;
         
         DrawText(L("<- 1 Jogador (Vs CPU)", "<- 1 Player (Vs CPU)"), PONC_WIDTH / 2 - 200, 250, 20, c1);
         DrawText(L("2 Jogadores ->", "2 Players ->"), PONC_WIDTH / 2 + 50, 250, 20, c2);
@@ -492,6 +496,10 @@ void ponc_unload(void) {
     printf("[PONC] Game unloaded\n");
 }
 
+int ponc_get_mode(void) {
+    return (ponc_state == PONC_STATE_MENU) ? 0 : game_mode;
+}
+
 // ══════════════════════════════════════════════
 // GAME MODULE DEFINITION
 // ══════════════════════════════════════════════
@@ -506,4 +514,5 @@ Game PONC_GAME = {
     .update      = ponc_update,
     .draw        = ponc_draw,
     .unload      = ponc_unload,
+    .get_mode    = ponc_get_mode,
 };

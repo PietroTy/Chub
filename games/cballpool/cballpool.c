@@ -129,17 +129,15 @@ static int balls_moving(void) {
 
 void cballpool_update(void) {
     if (cballpool_state == -1) {
-        if (IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_A)) {
-            game_mode = 0;
-            cballpool_state = 0;
-            cd_num = 3;
-            cd_timer = 0;
-        }
-        if (IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_D)) {
-            game_mode = 1;
-            cballpool_state = 0;
-            cd_num = 3;
-            cd_timer = 0;
+        if (IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_A)) { game_mode = 0; cballpool_state = 0; cd_num = 3; cd_timer = 0; }
+        if (IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_D)) { game_mode = 1; cballpool_state = 0; cd_num = 3; cd_timer = 0; }
+        
+        Vector2 mp = GetMousePosition();
+        Rectangle r1 = { PW / 2 - 260, 240, 240, 40 };
+        Rectangle r2 = { PW / 2 + 40, 240, 200, 40 };
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            if (CheckCollisionPointRec(mp, r1)) { game_mode = 0; cballpool_state = 0; cd_num = 3; cd_timer = 0; }
+            if (CheckCollisionPointRec(mp, r2)) { game_mode = 1; cballpool_state = 0; cd_num = 3; cd_timer = 0; }
         }
         return;
     }
@@ -181,8 +179,11 @@ void cballpool_update(void) {
                 int balls_rem = 0;
                 for (int i=start_b; i<=end_b; i++) if (!balls[i].pocketed) balls_rem++;
 
-                for (int i=start_b; i<=end_b; i++) {
-                    if (i == 8 && balls_rem > 0) continue;
+                for (int i = 1; i <= 15; i++) {
+                    // Skip if not player's type (unless it's the 8 ball and we are ready for it)
+                    if (p2_type == 1 && i > 7 && i != 8) continue;
+                    if (p2_type == 2 && i < 9 && i != 8) continue;
+                    if (p2_type != 0 && i == 8 && balls_rem > 0) continue;
                     if (balls[i].pocketed) continue;
 
                     for (int p=0; p<POCKET_COUNT; p++) {
@@ -395,8 +396,16 @@ void cballpool_draw(void) {
     if (cballpool_state == -1) {
         DrawRectangle(0,0,PW,PH,(Color){0,0,0,180});
         DrawText(L("SELECIONE O MODO", "SELECT MODE"), PW / 2 - MeasureText(L("SELECIONE O MODO", "SELECT MODE"), 40) / 2, 100, 40, WHITE);
-        Color c1 = (game_mode == 0) ? PURPLE : WHITE;
-        Color c2 = (game_mode == 1) ? PURPLE : WHITE;
+        
+        Vector2 mp = GetMousePosition();
+        Rectangle r1 = { PW / 2 - 260, 240, 240, 40 };
+        Rectangle r2 = { PW / 2 + 40, 240, 200, 40 };
+        
+        Color c1 = CheckCollisionPointRec(mp, r1) ? LIGHTGRAY : WHITE;
+        Color c2 = CheckCollisionPointRec(mp, r2) ? LIGHTGRAY : WHITE;
+        if (game_mode == 0) c1 = PURPLE;
+        if (game_mode == 1) c2 = PURPLE;
+
         DrawText(L("<- 1 Jogador (Vs CPU)", "<- 1 Player (Vs CPU)"), PW / 2 - 250, 250, 20, c1);
         DrawText(L("2 Jogadores ->", "2 Players ->"), PW / 2 + 50, 250, 20, c2);
         DrawText(L("Pressione ESQUERDA ou DIREITA para escolher", "Press LEFT or RIGHT to choose"), PW / 2 - MeasureText(L("Pressione ESQUERDA ou DIREITA para escolher", "Press LEFT or RIGHT to choose"), 20) / 2, PH - 60, 20, WHITE);
@@ -563,6 +572,10 @@ void cballpool_draw(void) {
 
 void cballpool_unload(void) { printf("[CBALLPOOL] Game unloaded\n"); }
 
+int cballpool_get_mode(void) {
+    return (cballpool_state == -1) ? 0 : game_mode;
+}
+
 Game CBALLPOOL_GAME = {
     .name = "C ball pool",
     .description = "Acerte as bolas coloridas na cacapa",
@@ -570,4 +583,5 @@ Game CBALLPOOL_GAME = {
     .game_width = PW, .game_height = PH,
     .init = cballpool_init, .update = cballpool_update,
     .draw = cballpool_draw, .unload = cballpool_unload,
+    .get_mode = cballpool_get_mode,
 };
